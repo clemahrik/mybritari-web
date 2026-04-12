@@ -165,8 +165,11 @@ export default function Estates() {
   const deposit      = Number(depositAmount) || minDeposit;
   const remaining    = Math.max(0, totalPrice - deposit);
   const durationMos  = selectedPlan?.duration_months || 1;
+  const durationWks  = selectedPlan?.duration_weeks || null;
   const monthlyAmt   = selectedPlan ? Math.ceil(remaining / durationMos) : 0;
-  const weeklyAmt    = selectedPlan ? Math.ceil(remaining / (durationMos * 4)) : 0;
+  const weeklyAmt    = selectedPlan
+    ? (durationWks ? Math.ceil(remaining / durationWks) : Math.ceil(remaining / (durationMos * 4)))
+    : 0;
 
   return (
     <Layout>
@@ -271,12 +274,12 @@ export default function Estates() {
                 <p className="font-800 text-textmain text-base mb-4">Choose Payment Type</p>
                 <div className="space-y-3 mb-5">
                   <button
-                    onClick={() => setPayType('full')}
+                    onClick={() => setPayType('outright')}
                     className={`w-full text-left p-4 rounded-2xl border-2 transition-all
-                      ${payType === 'full' ? 'border-navy bg-navy' : 'border-border bg-white'}`}
+                      ${payType === 'outright' ? 'border-navy bg-navy' : 'border-border bg-white'}`}
                   >
-                    <p className={`font-800 text-sm mb-0.5 ${payType === 'full' ? 'text-white' : 'text-textmain'}`}>Pay in Full</p>
-                    <p className={`text-xs ${payType === 'full' ? 'text-white/70' : 'text-textsub'}`}>
+                    <p className={`font-800 text-sm mb-0.5 ${payType === 'outright' ? 'text-white' : 'text-textmain'}`}>Pay in Full</p>
+                    <p className={`text-xs ${payType === 'outright' ? 'text-white/70' : 'text-textsub'}`}>
                       {fmtMoney(pricePerPlot)} — One payment, done
                     </p>
                   </button>
@@ -312,7 +315,7 @@ export default function Estates() {
 
                 <button
                   disabled={!payType}
-                  onClick={() => payType === 'full' ? setReserveStep(3) : setReserveStep(2)}
+                  onClick={() => payType === 'outright' ? setReserveStep(3) : setReserveStep(2)}
                   className="w-full bg-red text-white py-4 rounded-2xl font-800 disabled:opacity-40"
                 >
                   Next →
@@ -428,7 +431,7 @@ export default function Estates() {
                   <div className="p-4 space-y-2.5">
                     {[
                       { label: 'Estate',      val: selectedEstate?.name },
-                      { label: 'Payment',     val: payType === 'full' ? 'Full Payment' : 'Installment' },
+                      { label: 'Payment',     val: payType === 'outright' ? 'Full Payment' : 'Installment' },
                       { label: 'Plots',       val: `${numPlots} plot${numPlots > 1 ? 's' : ''} (${numPlots * sqm}sqm)` },
                       { label: 'Total Price', val: fmtMoney(totalPrice) },
                       ...(payType === 'installment' && selectedPlan ? [
@@ -455,7 +458,7 @@ export default function Estates() {
 
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setReserveStep(payType === 'full' ? 1 : 2)}
+                    onClick={() => setReserveStep(payType === 'outright' ? 1 : 2)}
                     className="flex-1 py-4 rounded-2xl border-2 border-border font-700 text-textsub"
                   >
                     ← Back
