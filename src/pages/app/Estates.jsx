@@ -5,7 +5,7 @@ import TopHeader from '../../components/TopHeader';
 import Spinner from '../../components/Spinner';
 import EmptyState from '../../components/EmptyState';
 import { useToast } from '../../components/Toast';
-import { estatesAPI, plansAPI, plotsAPI, contractsAPI } from '../../services/api';
+import { estatesAPI, plansAPI, contractsAPI } from '../../services/api';
 import { fmtMoney, parseArr } from '../../utils';
 
 function EstateCard({ estate, onReserve }) {
@@ -75,12 +75,10 @@ export default function Estates() {
   const [selectedEstate,   setSelectedEstate]   = useState(null);
   const [reserveStep,      setReserveStep]      = useState(1);
   const [plans,            setPlans]            = useState([]);
-  const [plots,            setPlots]            = useState([]);
   const [payType,          setPayType]          = useState('');      // 'full' | 'installment'
   const [payPeriod,        setPayPeriod]        = useState('monthly'); // 'monthly' | 'weekly'
   const [selectedPlan,     setSelectedPlan]     = useState(null);
   const [numPlots,         setNumPlots]         = useState(1);
-  const [selectedPlot,     setSelectedPlot]     = useState(null);
   const [depositAmount,    setDepositAmount]    = useState('');
   const [reserving,        setReserving]        = useState(false);
   const [reservedContract, setReservedContract] = useState(null);
@@ -99,16 +97,12 @@ export default function Estates() {
     setPayPeriod('monthly');
     setSelectedPlan(null);
     setDepositAmount('');
-    setSelectedPlot(null);
     setNumPlots(1);
     setReservedContract(null);
     setReserveModal(true);
-    const [pR, plR] = await Promise.all([
-      plansAPI.getByEstate(estate.id).catch(() => ({ data: { data: [] } })),
-      plotsAPI.getByEstate(estate.id).catch(() => ({ data: { data: [] } })),
-    ]);
-    setPlans(pR.data.data || []);
-    setPlots((plR.data.data || []).filter(p => p.status === 'available'));
+    plansAPI.getByEstate(estate.id)
+      .then(r => setPlans(r.data.data || []))
+      .catch(() => setPlans([]));
   }, []);
 
   async function handleUnlock() {
@@ -146,7 +140,6 @@ export default function Estates() {
         purchase_type:     payType,
         plan_id:           selectedPlan?.id,
         num_plots:         numPlots,
-        plot_id:           selectedPlot?.id,
         payment_frequency: payType === 'installment' ? payPeriod : undefined,
         initial_deposit:   payType === 'installment' ? Number(depositAmount) : undefined,
       });
@@ -349,13 +342,20 @@ export default function Estates() {
                 )}
 
                 <div className="space-y-2 mb-4">
-                  {plans.map(plan => {
-                    const planDeposit   = Math.ceil(totalPrice * ((plan.min_deposit_percent || 10) / 100));
+                  {plans
+                    .filter(plan => !!plan.is_active && (plan.payment_frequency || 'monthly') === payPeriod)
+                    .map(plan => {
+                    const isWeekly      = plan.payment_frequency === 'weekly';
+                    const estDep        = Number(selectedEstate?.initial_deposit_amount || 0);
+                    const planDeposit   = estDep || Math.ceil(totalPrice * ((plan.min_deposit_percent || 10) / 100));
                     const planRemaining = Math.max(0, totalPrice - planDeposit);
-                    const planMonthly   = Math.ceil(planRemaining / (plan.duration_months || 1));
-                    const planWeekly    = Math.ceil(planRemaining / ((plan.duration_months || 1) * 4));
-                    const displayAmt    = payPeriod === 'weekly' ? planWeekly : planMonthly;
-                    const periodLabel   = payPeriod === 'weekly' ? '/wk' : '/mo';
+                    const displayAmt    = isWeekly && plan.duration_weeks
+                      ? Math.ceil(planRemaining / plan.duration_weeks)
+                      : Math.ceil(planRemaining / (plan.duration_months || 1));
+                    const periodLabel   = isWeekly ? '/wk' : '/mo';
+                    const durationLabel = isWeekly && plan.duration_weeks
+                      ? `${plan.duration_weeks} weeks`
+                      : `${plan.duration_months} months`;
                     const isSelected    = selectedPlan?.id === plan.id;
                     return (
                       <button
@@ -368,7 +368,7 @@ export default function Estates() {
                           <div>
                             <p className={`font-800 text-sm ${isSelected ? 'text-white' : 'text-textmain'}`}>{plan.name}</p>
                             <p className={`text-xs mt-0.5 ${isSelected ? 'text-white/70' : 'text-textsub'}`}>
-                              Min deposit: {plan.min_deposit_percent}% · {plan.duration_months} months
+                              {durationLabel} · deposit: {fmtMoney(planDeposit)}
                             </p>
                           </div>
                           <div className="text-right">
@@ -383,6 +383,9 @@ export default function Estates() {
                       </button>
                     );
                   })}
+                  {plans.filter(p => !!p.is_active && (p.payment_frequency || 'monthly') === payPeriod).length === 0 && (
+                    <p className="text-center text-textsub text-sm py-4">No plans available. Please contact support.</p>
+                  )}
                 </div>
 
                 {selectedPlan && (
@@ -398,25 +401,6 @@ export default function Estates() {
                     <div className="flex justify-between text-xs text-textsub">
                       <span>Remaining after deposit</span>
                       <span className="font-800 text-textmain">{fmtMoney(Math.max(0, totalPrice - (Number(depositAmount) || 0)))}</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Optional plot selection */}
-                {plots.length > 0 && (
-                  <div className="mb-4">
-                    <p className="text-xs font-700 text-textsub uppercase tracking-wide mb-2">Select Plot (Optional)</p>
-                    <div className="flex gap-2 flex-wrap max-h-32 overflow-y-auto">
-                      {plots.slice(0, 20).map(p => (
-                        <button
-                          key={p.id}
-                          onClick={() => setSelectedPlot(selectedPlot?.id === p.id ? null : p)}
-                          className={`px-3 py-1.5 rounded-xl border text-xs font-700 transition-all
-                            ${selectedPlot?.id === p.id ? 'border-red bg-red text-white' : 'border-border text-textsub'}`}
-                        >
-                          {p.plot_label || p.plot_number}
-                        </button>
-                      ))}
                     </div>
                   </div>
                 )}
