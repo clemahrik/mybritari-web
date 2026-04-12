@@ -35,8 +35,9 @@ function Field({ label, value, onChange, type = 'text', placeholder, autoComplet
 }
 
 export default function Register() {
-  const navigate      = useNavigate();
-  const { showToast } = useToast();
+  const navigate         = useNavigate();
+  const { updateUser }   = useAuth();
+  const { showToast }    = useToast();
   const [form, setForm] = useState({
     first_name: '', last_name: '', email: '', phone: '',
     password: '', confirm: '', referral_code: '', access_code: '',
@@ -73,6 +74,7 @@ export default function Register() {
       const { token, user } = res.data;
       localStorage.setItem('mybritari_token', token);
       localStorage.setItem('mybritari_user', JSON.stringify(user));
+      updateUser(user); // hydrate AuthContext so subsequent updateUser calls merge correctly
       if (access_code.trim()) {
         showToast('Account created! If your access code was valid, exclusive estates have been unlocked for you.', 'success');
       }
