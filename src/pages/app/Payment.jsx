@@ -4,8 +4,8 @@ import Layout from '../../components/Layout';
 import TopHeader from '../../components/TopHeader';
 import Spinner from '../../components/Spinner';
 import { useToast } from '../../components/Toast';
-import { contractsAPI, paymentsAPI, settingsAPI } from '../../services/api';
-import { fmtMoney, fmtDate, pct, copyToClipboard, fileToBase64 } from '../../utils';
+import { contractsAPI, paymentsAPI } from '../../services/api';
+import { fmtMoney, pct, copyToClipboard, fileToBase64 } from '../../utils';
 
 export default function Payment() {
   const navigate = useNavigate();
@@ -13,14 +13,14 @@ export default function Payment() {
   const contractId = searchParams.get('contractId');
   const { showToast } = useToast();
 
-  const [contract,    setContract]    = useState(null);
-  const [bankAccounts,setBankAccounts]= useState([]);
-  const [loading,     setLoading]     = useState(true);
-  const [amount,      setAmount]      = useState('');
-  const [copied,      setCopied]      = useState('');
-  const [showReceipt, setShowReceipt] = useState(false);
+  const [contract,     setContract]     = useState(null);
+  const [bankAccounts, setBankAccounts] = useState([]);
+  const [schedule,     setSchedule]     = useState(null);
+  const [loading,      setLoading]      = useState(true);
+  const [amount,       setAmount]       = useState('');
+  const [copied,       setCopied]       = useState('');
+  const [showReceipt,  setShowReceipt]  = useState(false);
 
-  // Receipt form
   const [receiptForm, setReceiptForm] = useState({
     amount: '', payment_date: '', bank_name: '', teller_number: '', receipt_note: '', receipt_image: '',
   });
@@ -28,14 +28,14 @@ export default function Payment() {
 
   useEffect(() => {
     async function load() {
-      const [sR, bR] = await Promise.all([
-        settingsAPI.getAll().catch(() => ({ data: { data: {} } })),
-        paymentsAPI.getBankAccounts().catch(() => ({ data: { data: [] } })),
-      ]);
+      const bR = await paymentsAPI.getBankAccounts().catch(() => ({ data: { data: [] } }));
       setBankAccounts(bR.data.data || []);
 
       if (contractId) {
-        const cR = await contractsAPI.getOne(contractId).catch(() => null);
+        const [cR, scR] = await Promise.all([
+          contractsAPI.getOne(contractId).catch(() => null),
+          contractsAPI.getSchedule(contractId).catch(() => null),
+        ]);
         if (cR?.data?.data) {
           setContract(cR.data.data);
           const inst = cR.data.data.payment_frequency === 'weekly'
@@ -44,11 +44,21 @@ export default function Payment() {
           setAmount(String(inst || ''));
           setReceiptForm(f => ({ ...f, amount: String(inst || '') }));
         }
+        if (scR?.data) {
+          const sd = scR.data.data || scR.data;
+          setSchedule(Array.isArray(sd) ? sd : (sd.schedule || []));
+        }
       }
       setLoading(false);
     }
     load();
   }, [contractId]);
+
+  // Helper: set both amount and receipt form amount together
+  const setAmt = (val) => {
+    setAmount(String(val));
+    setReceiptForm(f => ({ ...f, amount: String(val) }));
+  };
 
   async function handleCopy(text, key) {
     await copyToClipboard(text);
@@ -73,13 +83,13 @@ export default function Payment() {
     setSubmitting(true);
     try {
       await paymentsAPI.submitReceipt({
-        contract_id:    contractId,
-        amount:         Number(amt),
+        contract_id:   contractId,
+        amount:        Number(amt),
         payment_date,
         bank_name,
         teller_number,
-        receipt_note:   receiptForm.receipt_note,
-        receipt_image:  receiptForm.receipt_image,
+        receipt_note:  receiptForm.receipt_note,
+        receipt_image: receiptForm.receipt_image,
       });
       showToast('Receipt submitted! Admin will verify within 24 hours.', 'success');
       navigate('/contracts');
@@ -88,10 +98,8 @@ export default function Payment() {
     } finally { setSubmitting(false); }
   }
 
-  const progress = contract ? pct(contract.amount_paid, contract.total_amount) : 0;
-  const inst = contract
-    ? (contract.payment_frequency === 'weekly' ? contract.weekly_installment : contract.monthly_installment)
-    : 0;
+  const progress      = contract ? pct(contract.amount_paid, contract.total_amount) : 0;
+  const currentPeriod = schedule?.find(p => p.status === 'due' || p.status === 'defaulted') || null;
 
   return (
     <Layout>
@@ -101,6 +109,7 @@ export default function Payment() {
         <div className="flex justify-center py-20"><Spinner size="lg" /></div>
       ) : (
         <div className="px-4 py-4 overflow-y-auto">
+
           {/* Contract summary */}
           {contract && (
             <div className="bg-navy rounded-2xl p-4 mb-4">
@@ -117,7 +126,7 @@ export default function Payment() {
             </div>
           )}
 
-          {/* Bank details */}
+          {/* Bank transfer details */}
           <div className="mb-4">
             <p className="text-sm font-800 text-textmain mb-3">Bank Transfer Details</p>
             {bankAccounts.length === 0 ? (
@@ -151,35 +160,76 @@ export default function Payment() {
             )}
           </div>
 
-          {/* Amount */}
+          {/* Amount to Pay */}
           {contract && (
-            <div className="mb-4">
-              <p className="text-xs font-700 text-textsub uppercase tracking-wide mb-2">Amount to Transfer</p>
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  value={amount}
-                  onChange={e => { setAmount(e.target.value); setReceiptForm(f => ({ ...f, amount: e.target.value })); }}
-                  className="flex-1 h-12 px-4 rounded-xl border border-border bg-surface-2 text-textmain font-800 text-base"
-                  placeholder="Enter amount"
-                />
-                {inst > 0 && (
-                  <button
-                    onClick={() => { setAmount(String(inst)); setReceiptForm(f => ({ ...f, amount: String(inst) })); }}
-                    className="bg-navy text-white px-4 h-12 rounded-xl text-xs font-700"
-                  >
-                    Use {fmtMoney(inst)}
-                  </button>
-                )}
-              </div>
-              {contract.outstanding_balance > 0 && (
+            <div className="bg-white rounded-2xl border border-border p-4 mb-4">
+              <p className="text-sm font-bold text-navy uppercase tracking-wide mb-3">Amount to Pay</p>
+
+              {currentPeriod && (
+                <div className="bg-surface rounded-xl p-3 mb-3">
+                  <p className="text-sm font-semibold text-textmain">
+                    {currentPeriod.period_label || currentPeriod.label}
+                  </p>
+                  <p className="text-lg font-bold text-red">
+                    {fmtMoney(currentPeriod.amount_due || currentPeriod.amount)} due
+                  </p>
+                  {Number(currentPeriod.carry_forward_amount) > 0 && (
+                    <p className="text-xs text-warning mt-1">
+                      Includes {fmtMoney(currentPeriod.carry_forward_amount)} carried forward
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <label className="text-xs text-textsub uppercase tracking-wide font-semibold">
+                Enter Amount
+              </label>
+              <input
+                type="number"
+                value={amount}
+                onChange={e => setAmt(e.target.value)}
+                className="w-full border border-border rounded-xl px-4 py-3 text-lg font-bold text-navy mt-1 mb-3"
+                placeholder="0"
+              />
+              <p className="text-xs text-textsub mb-3">
+                You can pay more than the minimum to get ahead on your schedule.
+              </p>
+
+              {Number(contract.outstanding_balance) > 0 && (
                 <button
-                  onClick={() => { setAmount(String(contract.outstanding_balance)); setReceiptForm(f => ({ ...f, amount: String(contract.outstanding_balance) })); }}
-                  className="mt-2 text-sm text-red font-700"
+                  onClick={() => setAmt(contract.outstanding_balance)}
+                  className="w-full border-2 border-navy text-navy font-bold py-3 rounded-xl text-sm"
                 >
-                  Pay Full Balance ({fmtMoney(contract.outstanding_balance)}) →
+                  Pay Full Balance — {fmtMoney(contract.outstanding_balance)}
                 </button>
               )}
+            </div>
+          )}
+
+          {/* Survey fee section */}
+          {contract &&
+           Number(contract.outstanding_balance) <= 0 &&
+           Number(contract.survey_fee_amount) > 0 &&
+           !contract.survey_fee_paid && (
+            <div className="bg-warning/10 border border-warning rounded-2xl p-4 mb-4">
+              <p className="text-sm font-bold text-warning mb-1">🎉 Main Payment Complete!</p>
+              <p className="text-sm text-textmain mb-3">
+                Your survey fee of {fmtMoney(contract.survey_fee_amount)} is now due.
+              </p>
+              <button
+                onClick={() => setAmt(contract.survey_fee_amount)}
+                className="w-full bg-warning text-white font-bold py-3 rounded-xl text-sm"
+              >
+                Pay Survey Fee — {fmtMoney(contract.survey_fee_amount)}
+              </button>
+            </div>
+          )}
+
+          {/* Infrastructure fee note */}
+          {contract && Number(contract.infrastructure_fee_amount) > 0 && (
+            <div className="bg-surface rounded-2xl p-4 mb-4">
+              <p className="text-sm text-textmuted">Infrastructure Fee: To be announced</p>
+              <p className="text-xs text-textmuted mt-1">Payable when construction begins — not due yet</p>
             </div>
           )}
 
@@ -272,7 +322,7 @@ export default function Payment() {
             </form>
           )}
 
-          {/* Card payment (coming soon) */}
+          {/* Card payment — coming soon */}
           <div className="bg-surface-2 rounded-2xl p-4 border border-border opacity-60">
             <div className="flex items-center gap-3">
               <span className="text-2xl">💳</span>

@@ -43,7 +43,6 @@ export default function Register() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
-  const [showCode, setShowCode] = useState(false);
 
   const set = (k) => (v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -74,6 +73,9 @@ export default function Register() {
       const { token, user } = res.data;
       localStorage.setItem('mybritari_token', token);
       localStorage.setItem('mybritari_user', JSON.stringify(user));
+      if (access_code.trim()) {
+        showToast('Account created! If your access code was valid, exclusive estates have been unlocked for you.', 'success');
+      }
       navigate('/terms', { replace: true });
     } catch (e) {
       setError(e?.response?.data?.message || 'Registration failed. Please try again.');
@@ -115,21 +117,18 @@ export default function Register() {
           </div>
 
           <div className="mb-5">
-            <button
-              type="button"
-              onClick={() => setShowCode(v => !v)}
-              className="text-sm text-red font-700 mb-2"
-            >
-              {showCode ? '− Hide' : '+ Have an exclusive access code?'}
-            </button>
-            {showCode && (
-              <input
-                value={form.access_code}
-                onChange={e => set('access_code')(e.target.value.toUpperCase())}
-                placeholder="Enter access code"
-                className="w-full h-[54px] px-4 rounded-xl border border-border bg-surface-2 text-textmain text-[15px] uppercase tracking-widest focus:border-navy"
-              />
-            )}
+            <label className="block text-xs font-700 text-textsub uppercase tracking-wide mb-2">
+              Access Code (Optional)
+            </label>
+            <input
+              value={form.access_code}
+              onChange={e => set('access_code')(e.target.value.toUpperCase())}
+              placeholder="Enter exclusive access code if you have one"
+              className="w-full h-[54px] px-4 rounded-xl border border-border bg-surface-2 text-textmain text-[15px] uppercase tracking-widest focus:border-navy"
+            />
+            <p className="text-xs text-textsub mt-1.5">
+              Have a special access code? Enter it to unlock exclusive estates after signing up.
+            </p>
           </div>
 
           {error && (
