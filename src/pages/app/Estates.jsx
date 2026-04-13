@@ -21,7 +21,7 @@ function EstateCard({ estate, onReserve }) {
       {estate.cover_image ? (
         <div className="relative">
           <img src={estate.cover_image} alt={estate.name} className="w-full h-48 object-cover" />
-          {estate.is_exclusive && (
+          {!!estate.is_exclusive && (
             <span className="absolute top-3 right-3 bg-red text-white text-xs font-bold px-2 py-1 rounded-full">
               ★ Exclusive
             </span>
@@ -30,7 +30,7 @@ function EstateCard({ estate, onReserve }) {
       ) : (
         <div className="w-full h-48 bg-surface-2 flex items-center justify-center relative">
           <span className="text-4xl">🏘</span>
-          {estate.is_exclusive && (
+          {!!estate.is_exclusive && (
             <span className="absolute top-3 right-3 bg-red text-white text-xs font-bold px-2 py-1 rounded-full">
               ★ Exclusive
             </span>
