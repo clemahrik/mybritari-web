@@ -10,6 +10,12 @@ import { fmtMoney, parseArr } from '../../utils';
 
 function EstateCard({ estate, onReserve }) {
   const feats = parseArr(estate.features);
+  const sizes = parseArr(estate.plot_sizes).filter(s => s.is_active !== false);
+  // Show starting price: lowest plot_size price if available, else price_per_plot
+  const startPrice = sizes.length > 0
+    ? Math.min(...sizes.map(s => Number(s.price || 0)))
+    : Number(estate.price_per_plot || 0);
+  const priceLabel = sizes.length > 0 ? `from ${fmtMoney(startPrice)}` : fmtMoney(startPrice);
   return (
     <div className="bg-white rounded-2xl overflow-hidden border border-border mb-4">
       {estate.cover_image ? (
@@ -35,8 +41,11 @@ function EstateCard({ estate, onReserve }) {
         <p className="font-900 text-textmain text-base mb-0.5">{estate.name}</p>
         <p className="text-xs text-textsub mb-3">📍 {estate.location}, {estate.state}</p>
         <div className="flex gap-2 flex-wrap mb-3">
-          <span className="bg-surface-2 text-textsub text-[11px] font-700 px-2.5 py-1 rounded-full">{fmtMoney(estate.price_per_plot)}/plot</span>
-          <span className="bg-surface-2 text-textsub text-[11px] font-700 px-2.5 py-1 rounded-full">{estate.standard_plot_size}sqm</span>
+          <span className="bg-surface-2 text-textsub text-[11px] font-700 px-2.5 py-1 rounded-full">{priceLabel}/plot</span>
+          {sizes.length === 0 && <span className="bg-surface-2 text-textsub text-[11px] font-700 px-2.5 py-1 rounded-full">{estate.standard_plot_size}sqm</span>}
+          {sizes.length > 0 && sizes.map(s => (
+            <span key={s.id || s.label} className="bg-surface-2 text-textsub text-[11px] font-700 px-2.5 py-1 rounded-full">{s.label}</span>
+          ))}
           <span className="bg-success-bg text-success text-[11px] font-700 px-2.5 py-1 rounded-full">{estate.available_plots} available</span>
         </div>
         {feats.length > 0 && (
@@ -73,6 +82,7 @@ export default function Estates() {
   // Reservation modal
   const [reserveModal,     setReserveModal]     = useState(false);
   const [selectedEstate,   setSelectedEstate]   = useState(null);
+  const [selectedPlotSize, setSelectedPlotSize] = useState(null); // {label,price,available_plots}
   const [reserveStep,      setReserveStep]      = useState(1);
   const [plans,            setPlans]            = useState([]);
   const [payType,          setPayType]          = useState('');      // 'full' | 'installment'
@@ -99,6 +109,9 @@ export default function Estates() {
     setDepositAmount('');
     setNumPlots(1);
     setReservedContract(null);
+    // Auto-select the first active plot size (if estate has plot sizes defined)
+    const sizes = parseArr(estate.plot_sizes).filter(s => s.is_active !== false);
+    setSelectedPlotSize(sizes.length > 0 ? sizes[0] : null);
     setReserveModal(true);
     plansAPI.getByEstate(estate.id)
       .then(r => setPlans(r.data.data || []))
@@ -144,6 +157,8 @@ export default function Estates() {
         num_plots:         numPlots,
         payment_frequency: payType === 'installment' ? payPeriod : undefined,
         initial_deposit:   payType === 'installment' ? Number(depositAmount) : undefined,
+        plot_size_label:   selectedPlotSize?.label || null,
+        price_per_plot:    pricePerPlot,
       });
       setReservedContract(res.data.data || res.data);
       setReserveStep(4);
@@ -160,8 +175,9 @@ export default function Estates() {
     return ok && st;
   });
 
-  const sqm          = selectedEstate?.standard_plot_size || 200;
-  const pricePerPlot = Number(selectedEstate?.price_per_plot || 0);
+  const activePlotSizes = parseArr(selectedEstate?.plot_sizes).filter(s => s.is_active !== false);
+  const sqm          = selectedPlotSize ? (parseInt(selectedPlotSize.label) || selectedEstate?.standard_plot_size || 200) : (selectedEstate?.standard_plot_size || 200);
+  const pricePerPlot = selectedPlotSize ? Number(selectedPlotSize.price || 0) : Number(selectedEstate?.price_per_plot || 0);
   const totalPrice   = pricePerPlot * numPlots;
   const durationMos  = selectedPlan?.duration_months || 1;
   const durationWks  = selectedPlan?.duration_weeks || null;
@@ -279,6 +295,27 @@ export default function Estates() {
             {reserveStep === 1 && (
               <div>
                 <p className="font-800 text-textmain text-base mb-4">Choose Payment Type</p>
+
+                {/* Plot size selector — only shown when estate has multiple sizes */}
+                {activePlotSizes.length > 0 && (
+                  <div className="mb-5">
+                    <p className="text-xs font-700 text-textsub uppercase tracking-wide mb-2">Plot Size</p>
+                    <div className="flex gap-2 flex-wrap">
+                      {activePlotSizes.map(s => (
+                        <button
+                          key={s.id || s.label}
+                          onClick={() => setSelectedPlotSize(s)}
+                          className={`px-4 py-2.5 rounded-xl border-2 text-sm font-700 transition-all
+                            ${selectedPlotSize?.label === s.label ? 'border-red bg-red text-white' : 'border-border text-textmain'}`}
+                        >
+                          <span>{s.label}</span>
+                          <span className={`block text-[11px] mt-0.5 ${selectedPlotSize?.label === s.label ? 'text-white/80' : 'text-textsub'}`}>{fmtMoney(s.price)}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-3 mb-5">
                   <button
                     onClick={() => setPayType('outright')}
@@ -439,7 +476,8 @@ export default function Estates() {
                     {[
                       { label: 'Estate',      val: selectedEstate?.name },
                       { label: 'Payment',     val: payType === 'outright' ? 'Full Payment' : 'Installment' },
-                      { label: 'Plots',       val: `${numPlots} plot${numPlots > 1 ? 's' : ''} (${numPlots * sqm}sqm)` },
+                      { label: 'Plot Size',   val: selectedPlotSize ? selectedPlotSize.label : `${sqm}sqm` },
+                      { label: 'Plots',       val: `${numPlots} plot${numPlots > 1 ? 's' : ''}` },
                       { label: 'Total Price', val: fmtMoney(totalPrice) },
                       ...(payType === 'installment' && selectedPlan ? [
                         { label: 'Plan',    val: selectedPlan.name },
