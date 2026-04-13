@@ -10,50 +10,82 @@ import { fmtMoney, parseArr } from '../../utils';
 
 function EstateCard({ estate, onReserve }) {
   const feats = parseArr(estate.features);
-  const sizes = parseArr(estate.plot_sizes).filter(s => s.is_active !== false);
-  // Show starting price: lowest plot_size price if available, else price_per_plot
+  const sizes = parseArr(estate.plot_sizes).filter(s => s.is_active !== false && Number(s.price) > 0);
   const startPrice = sizes.length > 0
-    ? Math.min(...sizes.map(s => Number(s.price || 0)))
+    ? Math.min(...sizes.map(s => Number(s.price)))
     : Number(estate.price_per_plot || 0);
-  const priceLabel = sizes.length > 0 ? `from ${fmtMoney(startPrice)}` : fmtMoney(startPrice);
+  const maxPrice = sizes.length > 0
+    ? Math.max(...sizes.map(s => Number(s.price)))
+    : startPrice;
+
   return (
-    <div className="bg-white rounded-2xl overflow-hidden border border-border mb-4">
+    <div className="bg-white rounded-2xl overflow-hidden border border-border mb-4 shadow-sm">
+      {/* Image */}
       {estate.cover_image ? (
         <div className="relative">
-          <img src={estate.cover_image} alt={estate.name} className="w-full h-48 object-cover" />
+          <img src={estate.cover_image} alt={estate.name} className="w-full h-52 object-cover" />
           {!!estate.is_exclusive && (
-            <span className="absolute top-3 right-3 bg-red text-white text-xs font-bold px-2 py-1 rounded-full">
+            <span className="absolute top-3 right-3 bg-red text-white text-xs font-bold px-2.5 py-1 rounded-full">
               ★ Exclusive
             </span>
           )}
         </div>
       ) : (
-        <div className="w-full h-48 bg-surface-2 flex items-center justify-center relative">
+        <div className="w-full h-52 bg-surface-2 flex items-center justify-center relative">
           <span className="text-4xl">🏘</span>
           {!!estate.is_exclusive && (
-            <span className="absolute top-3 right-3 bg-red text-white text-xs font-bold px-2 py-1 rounded-full">
+            <span className="absolute top-3 right-3 bg-red text-white text-xs font-bold px-2.5 py-1 rounded-full">
               ★ Exclusive
             </span>
           )}
         </div>
       )}
+
       <div className="p-4">
-        <p className="font-900 text-textmain text-base mb-0.5">{estate.name}</p>
+        <p className="font-900 text-textmain text-lg mb-0.5">{estate.name}</p>
         <p className="text-xs text-textsub mb-3">📍 {estate.location}, {estate.state}</p>
-        <div className="flex gap-2 flex-wrap mb-3">
-          {startPrice > 0 && (
-            <span className="bg-surface-2 text-textsub text-[11px] font-700 px-2.5 py-1 rounded-full">{priceLabel}/plot</span>
-          )}
-          {sizes.length === 0 && estate.standard_plot_size > 0 && (
-            <span className="bg-surface-2 text-textsub text-[11px] font-700 px-2.5 py-1 rounded-full">{estate.standard_plot_size}sqm</span>
-          )}
-          {sizes.length > 0 && sizes.map(s => (
-            <span key={s.id || s.label} className="bg-surface-2 text-textsub text-[11px] font-700 px-2.5 py-1 rounded-full">{s.label}</span>
-          ))}
-          {estate.available_plots > 0 && (
-            <span className="bg-success-bg text-success text-[11px] font-700 px-2.5 py-1 rounded-full">{estate.available_plots} available</span>
-          )}
-        </div>
+
+        {/* ── Prominent Price Panel ── */}
+        {startPrice > 0 && (
+          <div className="bg-navy rounded-2xl px-4 pt-4 pb-3 mb-3">
+            <p className="text-[11px] text-white/50 font-700 uppercase tracking-widest mb-0.5">
+              {sizes.length > 1 ? 'Plot Price — Starting From' : 'Price Per Plot'}
+            </p>
+            <div className="flex items-end gap-1 mb-2">
+              <p className="text-3xl font-900 text-white leading-none">{fmtMoney(startPrice)}</p>
+              {sizes.length > 1 && maxPrice > startPrice && (
+                <p className="text-base font-700 text-white/60 leading-none mb-0.5"> – {fmtMoney(maxPrice)}</p>
+              )}
+            </div>
+
+            {/* Size breakdown chips */}
+            {sizes.length > 0 ? (
+              <div className="flex gap-1.5 flex-wrap mb-2.5">
+                {sizes.map(s => (
+                  <span key={s.id || s.label} className="bg-white/10 text-white text-[11px] font-700 px-2.5 py-1 rounded-full">
+                    {s.label} · {fmtMoney(s.price)}
+                  </span>
+                ))}
+              </div>
+            ) : estate.standard_plot_size > 0 ? (
+              <p className="text-xs text-white/50 mb-2.5">{estate.standard_plot_size} sqm per plot</p>
+            ) : null}
+
+            {/* Badges row */}
+            <div className="flex gap-2 flex-wrap">
+              <span className="bg-success/20 text-success text-[11px] font-700 px-2.5 py-1 rounded-full">
+                ✓ Zero Interest Installment
+              </span>
+              {estate.available_plots > 0 && (
+                <span className="bg-white/10 text-white/80 text-[11px] font-700 px-2.5 py-1 rounded-full">
+                  {estate.available_plots} plots available
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Features */}
         {feats.length > 0 && (
           <div className="flex gap-1.5 flex-wrap mb-3">
             {feats.slice(0, 4).map(f => (
@@ -61,9 +93,10 @@ function EstateCard({ estate, onReserve }) {
             ))}
           </div>
         )}
+
         <button
           onClick={() => onReserve(estate)}
-          className="w-full bg-red text-white font-800 py-3 rounded-2xl text-sm active:opacity-80"
+          className="w-full bg-red text-white font-800 py-3.5 rounded-2xl text-sm active:opacity-80"
         >
           Reserve a Plot →
         </button>
@@ -300,7 +333,27 @@ export default function Estates() {
             {/* ── Step 1: Payment type ── */}
             {reserveStep === 1 && (
               <div>
-                <p className="font-800 text-textmain text-base mb-4">Choose Payment Type</p>
+                <p className="font-800 text-textmain text-base mb-3">Choose Payment Type</p>
+
+                {/* Live cost banner */}
+                <div className="bg-navy rounded-2xl px-4 py-3 mb-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-[11px] text-white/50 font-700 uppercase tracking-wide">Total for {numPlots} plot{numPlots > 1 ? 's' : ''}</p>
+                    <p className="text-2xl font-900 text-white leading-tight">{totalPrice > 0 ? fmtMoney(totalPrice) : '—'}</p>
+                  </div>
+                  {selectedPlotSize ? (
+                    <div className="text-right">
+                      <p className="text-[11px] text-white/50 font-700">Plot size</p>
+                      <p className="text-sm font-800 text-white">{selectedPlotSize.label}</p>
+                      <p className="text-xs text-white/60">{fmtMoney(pricePerPlot)}/plot</p>
+                    </div>
+                  ) : pricePerPlot > 0 ? (
+                    <div className="text-right">
+                      <p className="text-[11px] text-white/50 font-700">Per plot</p>
+                      <p className="text-sm font-800 text-white">{fmtMoney(pricePerPlot)}</p>
+                    </div>
+                  ) : null}
+                </div>
 
                 {/* Plot size selector — only shown when estate has multiple sizes */}
                 {activePlotSizes.length > 0 && (
@@ -476,28 +529,50 @@ export default function Estates() {
               <div>
                 <p className="font-800 text-textmain text-base mb-4">Confirm Reservation</p>
 
-                {/* Navy summary card */}
-                <div className="bg-navy rounded-2xl overflow-hidden mb-4">
-                  <div className="p-4 space-y-2.5">
-                    {[
-                      { label: 'Estate',      val: selectedEstate?.name },
-                      { label: 'Payment',     val: payType === 'outright' ? 'Full Payment' : 'Installment' },
-                      { label: 'Plot Size',   val: selectedPlotSize ? selectedPlotSize.label : `${sqm}sqm` },
-                      { label: 'Plots',       val: `${numPlots} plot${numPlots > 1 ? 's' : ''}` },
-                      { label: 'Total Price', val: fmtMoney(totalPrice) },
-                      ...(payType === 'installment' && selectedPlan ? [
-                        { label: 'Plan',    val: selectedPlan.name },
-                        { label: 'Deposit', val: fmtMoney(deposit) },
-                        { label: payPeriod === 'weekly' ? 'Weekly' : 'Monthly', val: fmtMoney(payPeriod === 'weekly' ? weeklyAmt : monthlyAmt) },
-                      ] : []),
-                      { label: 'Plot', val: 'To be assigned by Britari team' },
-                    ].map(r => (
-                      <div key={r.label} className="flex items-center justify-between">
-                        <span className="text-xs text-white/60 font-700">{r.label}</span>
-                        <span className="text-sm font-800 text-white">{r.val || '—'}</span>
+                {/* Total price hero */}
+                <div className="bg-navy rounded-2xl p-4 mb-3 text-center">
+                  <p className="text-xs text-white/50 font-700 uppercase tracking-widest mb-1">
+                    {payType === 'outright' ? 'You Are Paying' : 'Total Amount'}
+                  </p>
+                  <p className="text-4xl font-900 text-white mb-1">{fmtMoney(totalPrice)}</p>
+                  <p className="text-xs text-white/60">
+                    {numPlots} plot{numPlots > 1 ? 's' : ''} · {selectedPlotSize ? selectedPlotSize.label : `${sqm}sqm`} · {fmtMoney(pricePerPlot)}/plot
+                  </p>
+                  {payType === 'installment' && selectedPlan && (
+                    <div className="mt-3 pt-3 border-t border-white/10 flex justify-around text-center">
+                      <div>
+                        <p className="text-xs text-white/50 font-700">Initial Deposit</p>
+                        <p className="text-base font-900 text-white">{fmtMoney(deposit)}</p>
                       </div>
-                    ))}
-                  </div>
+                      <div className="w-px bg-white/10" />
+                      <div>
+                        <p className="text-xs text-white/50 font-700">{payPeriod === 'weekly' ? 'Weekly' : 'Monthly'} Payment</p>
+                        <p className="text-base font-900 text-white">{fmtMoney(payPeriod === 'weekly' ? weeklyAmt : monthlyAmt)}</p>
+                      </div>
+                      <div className="w-px bg-white/10" />
+                      <div>
+                        <p className="text-xs text-white/50 font-700">Duration</p>
+                        <p className="text-base font-900 text-white">
+                          {payPeriod === 'weekly' && selectedPlan.duration_weeks ? `${selectedPlan.duration_weeks}wks` : `${selectedPlan.duration_months}mo`}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Detail rows */}
+                <div className="bg-surface-2 rounded-2xl p-4 space-y-2.5 mb-4">
+                  {[
+                    { label: 'Estate',  val: selectedEstate?.name },
+                    { label: 'Payment', val: payType === 'outright' ? 'Full Payment' : `Installment — ${selectedPlan?.name}` },
+                    { label: 'Plots',   val: `${numPlots} plot${numPlots > 1 ? 's' : ''}` },
+                    { label: 'Plot',    val: 'Assigned by Britari team after payment' },
+                  ].map(r => (
+                    <div key={r.label} className="flex items-start justify-between gap-4">
+                      <span className="text-xs text-textsub font-700 shrink-0">{r.label}</span>
+                      <span className="text-xs font-800 text-textmain text-right">{r.val || '—'}</span>
+                    </div>
+                  ))}
                 </div>
 
                 {/* Amber note */}
