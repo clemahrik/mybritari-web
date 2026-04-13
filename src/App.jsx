@@ -17,6 +17,7 @@ import Dashboard       from './pages/app/Dashboard';
 import Estates         from './pages/app/Estates';
 import Contracts       from './pages/app/Contracts';
 import Payment         from './pages/app/Payment';
+import PaymentCallback from './pages/app/PaymentCallback';
 import PaymentReceipt  from './pages/app/PaymentReceipt';
 import Profile         from './pages/app/Profile';
 import Documents       from './pages/app/Documents';
@@ -58,8 +59,9 @@ function AppRoutes() {
       <Route path="/dashboard"       element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/estates"         element={<ProtectedRoute><Estates /></ProtectedRoute>} />
       <Route path="/contracts"       element={<ProtectedRoute><Contracts /></ProtectedRoute>} />
-      <Route path="/payment"         element={<ProtectedRoute><Payment /></ProtectedRoute>} />
-      <Route path="/payment-receipt" element={<ProtectedRoute><PaymentReceipt /></ProtectedRoute>} />
+      <Route path="/payment"          element={<ProtectedRoute><Payment /></ProtectedRoute>} />
+      <Route path="/payment/callback" element={<ProtectedRoute><PaymentCallback /></ProtectedRoute>} />
+      <Route path="/payment-receipt"  element={<ProtectedRoute><PaymentReceipt /></ProtectedRoute>} />
       <Route path="/profile"         element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="/documents"       element={<ProtectedRoute><Documents /></ProtectedRoute>} />
       <Route path="/notifications"   element={<ProtectedRoute><Notifications /></ProtectedRoute>} />

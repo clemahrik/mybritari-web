@@ -55,6 +55,7 @@ export const paymentsAPI = {
   getReceipts:     ()     => api.get('/payments/receipts'),
   submitReceipt:   (data) => api.post('/payments/bank-transfer', data),
   initializePaystack: (data) => api.post('/payments/initialize', data),
+  verifyPaystack:     (ref)  => api.get(`/payments/verify?reference=${ref}`),
 };
 
 export const plansAPI = {

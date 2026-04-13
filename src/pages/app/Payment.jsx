@@ -6,6 +6,7 @@ import Spinner from '../../components/Spinner';
 import { useToast } from '../../components/Toast';
 import { contractsAPI, paymentsAPI } from '../../services/api';
 import { fmtMoney, pct, copyToClipboard, fileToBase64 } from '../../utils';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Payment() {
   const navigate = useNavigate();
@@ -24,7 +25,9 @@ export default function Payment() {
   const [receiptForm, setReceiptForm] = useState({
     amount: '', payment_date: '', bank_name: '', teller_number: '', receipt_note: '', receipt_image: '',
   });
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting,      setSubmitting]      = useState(false);
+  const [paystackLoading, setPaystackLoading] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     async function load() {
@@ -71,6 +74,26 @@ export default function Payment() {
     if (!file) return;
     const b64 = await fileToBase64(file);
     setReceiptForm(f => ({ ...f, receipt_image: b64 }));
+  }
+
+  async function handlePaystack() {
+    if (!contractId) return showToast('Please select a contract', 'error');
+    if (!amount || Number(amount) <= 0) return showToast('Enter a valid amount', 'error');
+    setPaystackLoading(true);
+    try {
+      const callbackUrl = `${window.location.origin}/payment/callback`;
+      const res = await paymentsAPI.initializePaystack({
+        contract_id:  contractId,
+        amount:       Number(amount),
+        callback_url: callbackUrl,
+      });
+      const url = res.data?.data?.authorization_url || res.data?.authorization_url;
+      if (!url) throw new Error('No authorization URL returned');
+      window.location.href = url;
+    } catch (e) {
+      showToast(e?.response?.data?.message || 'Could not initialize payment', 'error');
+      setPaystackLoading(false);
+    }
   }
 
   async function handleSubmitReceipt(e) {
@@ -322,17 +345,24 @@ export default function Payment() {
             </form>
           )}
 
-          {/* Card payment — coming soon */}
-          <div className="bg-surface-2 rounded-2xl p-4 border border-border opacity-60">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">💳</span>
-              <div>
-                <p className="text-sm font-800 text-textmain">Card Payment</p>
-                <p className="text-xs text-textsub">Coming soon — Pay with Paystack</p>
-              </div>
-              <span className="ml-auto bg-surface text-textmuted text-[10px] font-700 px-2 py-0.5 rounded-full border border-border">SOON</span>
-            </div>
-          </div>
+          {/* Card payment — Paystack */}
+          <button
+            onClick={handlePaystack}
+            disabled={paystackLoading || !amount || Number(amount) <= 0}
+            className="w-full bg-navy text-white rounded-2xl p-4 flex items-center justify-center gap-3 disabled:opacity-50"
+          >
+            {paystackLoading ? (
+              <Spinner size="sm" color="white" />
+            ) : (
+              <>
+                <span className="text-2xl">💳</span>
+                <div className="text-left">
+                  <p className="text-sm font-800">Pay with Card</p>
+                  <p className="text-xs text-white/70">Secure payment via Paystack</p>
+                </div>
+              </>
+            )}
+          </button>
 
           <div className="h-6" />
         </div>

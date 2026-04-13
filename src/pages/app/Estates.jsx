@@ -161,11 +161,16 @@ export default function Estates() {
   const sqm          = selectedEstate?.standard_plot_size || 200;
   const pricePerPlot = Number(selectedEstate?.price_per_plot || 0);
   const totalPrice   = pricePerPlot * numPlots;
-  const minDeposit   = selectedPlan ? Math.ceil(totalPrice * ((selectedPlan.min_deposit_percent || 10) / 100)) : 0;
-  const deposit      = Number(depositAmount) || minDeposit;
-  const remaining    = Math.max(0, totalPrice - deposit);
   const durationMos  = selectedPlan?.duration_months || 1;
   const durationWks  = selectedPlan?.duration_weeks || null;
+  // Minimum deposit = one installment period (weekly or monthly) based on full plot price
+  const minDeposit   = selectedPlan
+    ? (payPeriod === 'weekly'
+        ? (durationWks ? Math.ceil(totalPrice / durationWks) : Math.ceil(totalPrice / (durationMos * 4)))
+        : Math.ceil(totalPrice / durationMos))
+    : 0;
+  const deposit      = Number(depositAmount) || minDeposit;
+  const remaining    = Math.max(0, totalPrice - deposit);
   const monthlyAmt   = selectedPlan ? Math.ceil(remaining / durationMos) : 0;
   const weeklyAmt    = selectedPlan
     ? (durationWks ? Math.ceil(remaining / durationWks) : Math.ceil(remaining / (durationMos * 4)))
