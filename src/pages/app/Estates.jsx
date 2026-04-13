@@ -41,12 +41,18 @@ function EstateCard({ estate, onReserve }) {
         <p className="font-900 text-textmain text-base mb-0.5">{estate.name}</p>
         <p className="text-xs text-textsub mb-3">📍 {estate.location}, {estate.state}</p>
         <div className="flex gap-2 flex-wrap mb-3">
-          <span className="bg-surface-2 text-textsub text-[11px] font-700 px-2.5 py-1 rounded-full">{priceLabel}/plot</span>
-          {sizes.length === 0 && <span className="bg-surface-2 text-textsub text-[11px] font-700 px-2.5 py-1 rounded-full">{estate.standard_plot_size}sqm</span>}
+          {startPrice > 0 && (
+            <span className="bg-surface-2 text-textsub text-[11px] font-700 px-2.5 py-1 rounded-full">{priceLabel}/plot</span>
+          )}
+          {sizes.length === 0 && estate.standard_plot_size > 0 && (
+            <span className="bg-surface-2 text-textsub text-[11px] font-700 px-2.5 py-1 rounded-full">{estate.standard_plot_size}sqm</span>
+          )}
           {sizes.length > 0 && sizes.map(s => (
             <span key={s.id || s.label} className="bg-surface-2 text-textsub text-[11px] font-700 px-2.5 py-1 rounded-full">{s.label}</span>
           ))}
-          <span className="bg-success-bg text-success text-[11px] font-700 px-2.5 py-1 rounded-full">{estate.available_plots} available</span>
+          {estate.available_plots > 0 && (
+            <span className="bg-success-bg text-success text-[11px] font-700 px-2.5 py-1 rounded-full">{estate.available_plots} available</span>
+          )}
         </div>
         {feats.length > 0 && (
           <div className="flex gap-1.5 flex-wrap mb-3">
