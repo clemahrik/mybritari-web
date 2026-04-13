@@ -118,8 +118,10 @@ export default function Estates() {
         setUnlockMessage('Estate unlocked! Refreshing...');
         setUnlockSuccess(true);
         setTimeout(async () => {
-          const r = await estatesAPI.getAll().catch(() => ({ data: { data: [] } }));
-          setEstates(r.data.data || []);
+          try {
+            const r = await estatesAPI.getAll();
+            setEstates(r.data.data || []);
+          } catch { /* keep current list on failure */ }
           setShowUnlock(false);
           setUnlockCode('');
           setUnlockMessage('');
