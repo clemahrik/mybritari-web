@@ -21,8 +21,8 @@ export default function PaymentCallback() {
 
     paymentsAPI.verifyPaystack(reference)
       .then(res => {
-        const data = res.data?.data || res.data;
-        if (data?.status === 'success' || data?.payment?.status === 'verified') {
+        // Backend returns { success: true, data: { status: 'completed' } } on success
+        if (res.data?.success === true) {
           setStatus('success');
           showToast('Payment successful!', 'success');
           setTimeout(() => navigate('/contracts'), 2500);
