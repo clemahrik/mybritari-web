@@ -128,7 +128,7 @@ export default function Terms() {
   }
 
   return (
-    <div className="flex flex-col bg-surface" style={{ maxWidth: 430, width: '100%', minHeight: '100vh' }}>
+    <div className="flex flex-col bg-surface overflow-hidden" style={{ maxWidth: 430, width: '100%', height: '100vh' }}>
       {/* Header */}
       <div className="bg-navy px-5 pt-12 pb-4 sticky top-0 z-10">
         <h1 className="text-white font-900 text-lg text-center">Terms & Conditions</h1>

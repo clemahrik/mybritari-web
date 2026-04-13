@@ -29,7 +29,7 @@ export default function Referral() {
   }, []);
 
   const referralCode = user?.referral_code || '';
-  const referralLink = `https://app.britariproperties.com/register?ref=${referralCode}`;
+  const referralLink = `https://britari.com/register?ref=${referralCode}`;
   const referred     = data?.referrals || [];
   const total        = data?.total_referrals || referred.length;
   const active       = data?.active_referrals || referred.filter(r => r.status === 'active').length;
