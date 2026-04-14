@@ -313,23 +313,37 @@ export default function Estates() {
                 <div className="space-y-3 mb-5">
                   <button
                     onClick={() => setPayType('outright')}
-                    className={`w-full text-left p-4 rounded-2xl border-2 transition-all
-                      ${payType === 'outright' ? 'border-navy bg-navy' : 'border-navy bg-white'}`}
+                    className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all
+                      ${payType === 'outright' ? 'border-navy bg-navy' : 'border-navy bg-surface-2'}`}
                   >
-                    <p className={`font-800 text-sm mb-0.5 ${payType === 'outright' ? 'text-white' : 'text-textmain'}`}>Pay in Full</p>
-                    <p className={`text-xs ${payType === 'outright' ? 'text-white/70' : 'text-textsub'}`}>
-                      {fmtMoney(pricePerPlot)} — One payment, done
-                    </p>
+                    <span className="text-2xl flex-shrink-0">💵</span>
+                    <div className="flex-1 text-left">
+                      <p className={`font-800 text-sm mb-0.5 ${payType === 'outright' ? 'text-white' : 'text-textmain'}`}>Pay in Full</p>
+                      <p className={`text-xs ${payType === 'outright' ? 'text-white/70' : 'text-textsub'}`}>
+                        {fmtMoney(pricePerPlot)} — One payment, done
+                      </p>
+                    </div>
+                    <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all
+                      ${payType === 'outright' ? 'border-white bg-white' : 'border-[#0B1F3A] bg-transparent'}`}>
+                      {payType === 'outright' && <div className="w-2.5 h-2.5 rounded-full bg-navy" />}
+                    </div>
                   </button>
                   <button
                     onClick={() => setPayType('installment')}
-                    className={`w-full text-left p-4 rounded-2xl border-2 transition-all
-                      ${payType === 'installment' ? 'border-navy bg-navy' : 'border-navy bg-white'}`}
+                    className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all
+                      ${payType === 'installment' ? 'border-navy bg-navy' : 'border-navy bg-surface-2'}`}
                   >
-                    <p className={`font-800 text-sm mb-0.5 ${payType === 'installment' ? 'text-white' : 'text-textmain'}`}>Pay in Installments</p>
-                    <p className={`text-xs ${payType === 'installment' ? 'text-white/70' : 'text-textsub'}`}>
-                      Spread over time — zero interest
-                    </p>
+                    <span className="text-2xl flex-shrink-0">📅</span>
+                    <div className="flex-1 text-left">
+                      <p className={`font-800 text-sm mb-0.5 ${payType === 'installment' ? 'text-white' : 'text-textmain'}`}>Pay in Installments</p>
+                      <p className={`text-xs ${payType === 'installment' ? 'text-white/70' : 'text-textsub'}`}>
+                        Spread over time — zero interest
+                      </p>
+                    </div>
+                    <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all
+                      ${payType === 'installment' ? 'border-white bg-white' : 'border-[#0B1F3A] bg-transparent'}`}>
+                      {payType === 'installment' && <div className="w-2.5 h-2.5 rounded-full bg-navy" />}
+                    </div>
                   </button>
                 </div>
 
