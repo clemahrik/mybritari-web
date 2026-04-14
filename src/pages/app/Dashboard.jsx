@@ -4,7 +4,7 @@ import Layout from '../../components/Layout';
 import TopHeader from '../../components/TopHeader';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
-import { fmtMoney, fmtDate, greet, pct } from '../../utils';
+import { fmtMoney, fmtDate, greet, pct, parseArr } from '../../utils';
 import Spinner from '../../components/Spinner';
 
 const QUICK = [
@@ -250,21 +250,27 @@ export default function Dashboard() {
                 <button onClick={() => navigate('/estates')} className="text-red text-sm font-700">View All →</button>
               </div>
               <div className="space-y-3">
-                {estates.map(e => (
-                  <div key={e.id} className="bg-white rounded-2xl overflow-hidden border border-border">
-                    {e.cover_image && (
-                      <img src={e.cover_image} alt={e.name} className="w-full h-36 object-cover" />
-                    )}
-                    <div className="p-4">
-                      <p className="font-800 text-textmain text-sm">{e.name}</p>
-                      <p className="text-xs text-textsub mt-0.5">📍 {e.location}, {e.state}</p>
-                      <div className="flex items-center justify-between mt-3">
-                        <p className="text-sm font-800 text-red">{fmtMoney(e.price_per_plot)}<span className="text-xs text-textmuted font-500">/plot</span></p>
-                        <button onClick={() => navigate('/estates')} className="text-xs font-700 text-navy bg-surface-2 px-3 py-1.5 rounded-xl">View →</button>
+                {estates.map(e => {
+                  const sizes = parseArr(e.plot_sizes).filter(s => s.is_active !== false && Number(s.price) > 0);
+                  const startPrice = sizes.length > 0
+                    ? Math.min(...sizes.map(s => Number(s.price)))
+                    : Number(e.price_per_plot || 0);
+                  return (
+                    <div key={e.id} className="bg-white rounded-2xl overflow-hidden border border-border">
+                      {e.cover_image && (
+                        <img src={e.cover_image} alt={e.name} className="w-full h-36 object-cover" />
+                      )}
+                      <div className="p-4">
+                        <p className="font-800 text-textmain text-sm">{e.name}</p>
+                        <p className="text-xs text-textsub mt-0.5">📍 {e.location}, {e.state}</p>
+                        <div className="flex items-center justify-between mt-3">
+                          <p className="text-sm font-800 text-red">{fmtMoney(startPrice)}<span className="text-xs text-textmuted font-500">/plot</span></p>
+                          <button onClick={() => navigate('/estates')} className="text-xs font-700 text-navy bg-surface-2 px-3 py-1.5 rounded-xl">View →</button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
