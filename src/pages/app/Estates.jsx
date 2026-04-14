@@ -8,7 +8,7 @@ import { useToast } from '../../components/Toast';
 import { estatesAPI, plansAPI, contractsAPI } from '../../services/api';
 import { fmtMoney, parseArr } from '../../utils';
 
-function EstateCard({ estate, onReserve, onUnlock }) {
+function EstateCard({ estate, onReserve }) {
   const feats = parseArr(estate.features);
   const sizes = parseArr(estate.plot_sizes).filter(s => s.is_active !== false && Number(s.price) > 0);
   const startPrice = sizes.length > 0
@@ -18,28 +18,21 @@ function EstateCard({ estate, onReserve, onUnlock }) {
     ? Math.max(...sizes.map(s => Number(s.price)))
     : startPrice;
 
-  const isLocked = !!estate.is_exclusive && !estate.is_unlocked;
-
   return (
-    <div className={`bg-white rounded-2xl overflow-hidden border mb-4 shadow-sm ${isLocked ? 'border-yellow-300' : 'border-border'}`}>
+    <div className="bg-white rounded-2xl overflow-hidden border border-border mb-4 shadow-sm">
       {/* Image */}
       {estate.cover_image ? (
         <div className="relative">
-          <img src={estate.cover_image} alt={estate.name} className={`w-full h-52 object-cover ${isLocked ? 'opacity-80' : ''}`} />
+          <img src={estate.cover_image} alt={estate.name} className="w-full h-52 object-cover" />
           {!!estate.is_exclusive && (
             <span className="absolute top-3 right-3 bg-red text-white text-xs font-bold px-2.5 py-1 rounded-full">
               ★ Exclusive
             </span>
           )}
-          {isLocked && (
-            <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-              <span className="text-5xl">🔒</span>
-            </div>
-          )}
         </div>
       ) : (
         <div className="w-full h-52 bg-surface-2 flex items-center justify-center relative">
-          <span className="text-4xl">{isLocked ? '🔒' : '🏘'}</span>
+          <span className="text-4xl">🏘</span>
           {!!estate.is_exclusive && (
             <span className="absolute top-3 right-3 bg-red text-white text-xs font-bold px-2.5 py-1 rounded-full">
               ★ Exclusive
@@ -51,14 +44,6 @@ function EstateCard({ estate, onReserve, onUnlock }) {
       <div className="p-4">
         <p className="font-900 text-textmain text-lg mb-0.5">{estate.name}</p>
         <p className="text-xs text-textsub mb-3">📍 {estate.location}, {estate.state}</p>
-
-        {/* Lock notice for exclusive estates */}
-        {isLocked && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-2xl px-4 py-3 mb-3">
-            <p className="text-xs font-700 text-yellow-700 mb-1">🔒 Exclusive Estate</p>
-            <p className="text-xs text-yellow-600">Enter your access code below to unlock and reserve a plot in this estate.</p>
-          </div>
-        )}
 
         {/* ── Prominent Price Panel ── */}
         {startPrice > 0 && (
@@ -109,21 +94,12 @@ function EstateCard({ estate, onReserve, onUnlock }) {
           </div>
         )}
 
-        {isLocked ? (
-          <button
-            onClick={() => onUnlock(estate)}
-            className="w-full bg-yellow-500 text-white font-800 py-3.5 rounded-2xl text-sm active:opacity-80"
-          >
-            🔑 Enter Access Code to Unlock →
-          </button>
-        ) : (
-          <button
-            onClick={() => onReserve(estate)}
-            className="w-full bg-red text-white font-800 py-3.5 rounded-2xl text-sm active:opacity-80"
-          >
-            Reserve a Plot →
-          </button>
-        )}
+        <button
+          onClick={() => onReserve(estate)}
+          className="w-full bg-red text-white font-800 py-3.5 rounded-2xl text-sm active:opacity-80"
+        >
+          Reserve a Plot →
+        </button>
       </div>
     </div>
   );
@@ -136,11 +112,6 @@ export default function Estates() {
   const [loading,       setLoading]       = useState(true);
   const [search,        setSearch]        = useState('');
   const [stateFilter,   setStateFilter]   = useState('');
-  const [showUnlock,    setShowUnlock]    = useState(false);
-  const [unlockCode,    setUnlockCode]    = useState('');
-  const [unlocking,     setUnlocking]     = useState(false);
-  const [unlockMessage, setUnlockMessage] = useState('');
-  const [unlockSuccess, setUnlockSuccess] = useState(false);
 
   // Reservation modal
   const [reserveModal,     setReserveModal]     = useState(false);
@@ -180,34 +151,6 @@ export default function Estates() {
       .then(r => setPlans(r.data.data || []))
       .catch(() => setPlans([]));
   }, []);
-
-  async function handleUnlock() {
-    if (!unlockCode.trim()) return;
-    setUnlocking(true);
-    setUnlockMessage('');
-    try {
-      const res = await estatesAPI.unlock(unlockCode.trim().toUpperCase());
-      if (res?.data?.already_had_access) {
-        setUnlockMessage('You already have access to this estate');
-        setUnlockSuccess(true);
-      } else {
-        setUnlockMessage('Estate unlocked! Refreshing...');
-        setUnlockSuccess(true);
-        setTimeout(async () => {
-          try {
-            const r = await estatesAPI.getAll();
-            setEstates(r.data.data || []);
-          } catch { /* keep current list on failure */ }
-          setShowUnlock(false);
-          setUnlockCode('');
-          setUnlockMessage('');
-        }, 1500);
-      }
-    } catch {
-      setUnlockMessage('Invalid or expired code. Please check and try again.');
-      setUnlockSuccess(false);
-    } finally { setUnlocking(false); }
-  }
 
   async function handleReserve() {
     if (!selectedEstate) return;
@@ -296,48 +239,12 @@ export default function Estates() {
           </div>
         )}
 
-        {/* Access code unlock modal (shown when user taps "Enter Access Code" on a locked card) */}
-        {showUnlock && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center" onClick={e => { if (e.target === e.currentTarget) { setShowUnlock(false); setUnlockCode(''); setUnlockMessage(''); } }}>
-            <div className="bg-white w-full max-w-[430px] rounded-t-3xl p-6">
-              <p className="font-900 text-textmain text-base mb-1">🔑 Unlock Exclusive Estate</p>
-              <p className="text-xs text-textsub mb-4">Enter the access code you received to unlock and reserve plots in this estate.</p>
-              <input
-                value={unlockCode}
-                onChange={e => setUnlockCode(e.target.value.toUpperCase())}
-                placeholder="Enter your access code"
-                className="w-full border border-border rounded-xl px-4 py-3 text-sm mb-3 uppercase font-700 tracking-widest"
-                autoFocus
-              />
-              <button
-                onClick={handleUnlock}
-                disabled={unlocking || !unlockCode.trim()}
-                className="w-full bg-red text-white font-800 py-3.5 rounded-2xl text-sm disabled:opacity-50"
-              >
-                {unlocking ? 'Unlocking...' : 'Unlock Estate →'}
-              </button>
-              {unlockMessage && (
-                <p className={`text-sm mt-3 text-center font-600 ${unlockSuccess ? 'text-success' : 'text-red'}`}>
-                  {unlockMessage}
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-
         {loading ? (
           <div className="flex justify-center py-12"><Spinner size="lg" /></div>
         ) : filtered.length === 0 ? (
           <EmptyState icon="🏘" title="No estates found" subtitle="Try adjusting your search or check back later." />
         ) : (
-          filtered.map(e => (
-            <EstateCard
-              key={e.id}
-              estate={e}
-              onReserve={openReserve}
-              onUnlock={() => { setShowUnlock(true); setUnlockCode(''); setUnlockMessage(''); }}
-            />
-          ))
+          filtered.map(e => <EstateCard key={e.id} estate={e} onReserve={openReserve} />)
         )}
       </div>
 
