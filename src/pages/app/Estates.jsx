@@ -162,7 +162,7 @@ export default function Estates() {
         plan_id:           selectedPlan?.id,
         num_plots:         numPlots,
         payment_frequency: payType === 'installment' ? payPeriod : undefined,
-        initial_deposit:   payType === 'installment' ? Number(depositAmount) : undefined,
+        initial_deposit:   payType === 'installment' ? deposit : undefined,
         plot_size_label:   selectedPlotSize?.label || null,
         price_per_plot:    pricePerPlot,
       });
