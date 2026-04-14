@@ -4,6 +4,7 @@ import Layout from '../../components/Layout';
 import TopHeader from '../../components/TopHeader';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
+import { notificationsAPI, authAPI } from '../../services/api';
 import { fmtMoney, fmtDate, greet, pct, parseArr } from '../../utils';
 import Spinner from '../../components/Spinner';
 
@@ -35,9 +36,13 @@ export default function Dashboard() {
   const [settings,   setSettings]   = useState({});
   const [bankAccount,setBankAccount]= useState(null);
   const [loading,    setLoading]    = useState(true);
-  const [showBal,    setShowBal]    = useState(true);
-  const [promoIdx,   setPromoIdx]   = useState(0);
+  const [showBal,        setShowBal]        = useState(true);
+  const [promoIdx,       setPromoIdx]       = useState(0);
+  const [unreadCount,    setUnreadCount]    = useState(0);
+  const [resendingVerif, setResendingVerif] = useState(false);
+  const [verifSent,      setVerifSent]      = useState(false);
   const promoTimer = useRef(null);
+  const pollTimer  = useRef(null);
 
   const load = useCallback(async () => {
     try {
@@ -63,11 +68,34 @@ export default function Dashboard() {
     return () => clearInterval(promoTimer.current);
   }, []);
 
+  // Poll unread notification count every 30 seconds
+  useEffect(() => {
+    const poll = () => {
+      notificationsAPI.unreadCount()
+        .then(r => setUnreadCount(r.data?.count ?? 0))
+        .catch(() => {});
+    };
+    poll();
+    pollTimer.current = setInterval(poll, 30000);
+    return () => clearInterval(pollTimer.current);
+  }, []);
+
+  async function handleResendVerification() {
+    setResendingVerif(true);
+    try {
+      await authAPI.resendVerification();
+      setVerifSent(true);
+    } catch {}
+    finally { setResendingVerif(false); }
+  }
+
   const totalPaid  = contracts.reduce((s, c) => s + (Number(c.amount_paid) || 0), 0);
   const totalOwing = contracts.reduce((s, c) => s + (Number(c.outstanding_balance) || 0), 0);
   const totalValue = totalPaid + totalOwing;
   const active     = contracts.filter(c => c.status === 'active');
-  const unread     = notifs.filter(n => !n.is_read).length;
+  // Use polled count for real-time badge; fall back to local count on first load
+  const unread     = unreadCount || notifs.filter(n => !n.is_read).length;
+  const emailVerified = user?.email_verified;
 
   const promos = [
     { title: settings.promo_1_title || 'Pay Over 24 Months',    sub: settings.promo_1_subtitle || 'Zero interest — same total price always' },
@@ -96,6 +124,28 @@ export default function Dashboard() {
             <button onClick={() => navigate('/support')} className="w-full bg-red text-white py-3 rounded-2xl font-700 mb-3">Contact Support</button>
             <button onClick={logout} className="text-red text-sm font-700">Sign Out</button>
           </div>
+        </div>
+      )}
+
+      {/* Email verification banner */}
+      {!emailVerified && (
+        <div className="bg-amber-50 border-b border-amber-200 px-4 py-3 flex items-center gap-3">
+          <span className="text-lg flex-shrink-0">✉️</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-700 text-amber-800">Verify your email address</p>
+            <p className="text-xs text-amber-700">Check your inbox for a verification link.</p>
+          </div>
+          {verifSent ? (
+            <span className="text-xs font-700 text-green-700 flex-shrink-0">Sent ✓</span>
+          ) : (
+            <button
+              onClick={handleResendVerification}
+              disabled={resendingVerif}
+              className="text-xs font-700 text-amber-900 underline flex-shrink-0 disabled:opacity-50"
+            >
+              {resendingVerif ? 'Sending…' : 'Resend'}
+            </button>
+          )}
         </div>
       )}
 

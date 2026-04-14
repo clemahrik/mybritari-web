@@ -25,14 +25,16 @@ api.interceptors.response.use(
 );
 
 export const authAPI = {
-  register:       (data) => api.post('/auth/register', data),
-  login:          (data) => api.post('/auth/login', data),
-  acceptTerms:    ()     => api.post('/auth/accept-terms'),
-  getMe:          ()     => api.get('/auth/me'),
-  getProfile:     ()     => api.get('/auth/profile'),
-  updateProfile:  (data) => api.put('/auth/profile', data),
-  changePassword: (data) => api.post('/auth/change-password', data),
-  submitKYC:      (data) => api.post('/auth/kyc', data),
+  register:             (data)  => api.post('/auth/register', data),
+  login:                (data)  => api.post('/auth/login', data),
+  acceptTerms:          ()      => api.post('/auth/accept-terms'),
+  getMe:                ()      => api.get('/auth/me'),
+  getProfile:           ()      => api.get('/auth/profile'),
+  updateProfile:        (data)  => api.put('/auth/profile', data),
+  changePassword:       (data)  => api.post('/auth/change-password', data),
+  submitKYC:            (data)  => api.post('/auth/kyc', data),
+  verifyEmail:          (token) => api.get(`/auth/verify-email/${token}`),
+  resendVerification:   ()      => api.post('/auth/resend-verification'),
 };
 
 export const estatesAPI = {
@@ -75,9 +77,10 @@ export const settingsAPI = {
 };
 
 export const notificationsAPI = {
-  getAll:     ()   => api.get('/notifications'),
-  markRead:   (id) => api.put(`/notifications/${id}/read`),
-  markAllRead:()   => api.put('/notifications/read-all'),
+  getAll:      ()   => api.get('/notifications'),
+  unreadCount: ()   => api.get('/notifications/unread-count'),
+  markRead:    (id) => api.put(`/notifications/${id}/read`),
+  markAllRead: ()   => api.put('/notifications/read-all'),
 };
 
 export const supportAPI = {
