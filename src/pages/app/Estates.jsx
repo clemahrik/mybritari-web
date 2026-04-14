@@ -195,9 +195,9 @@ export default function Estates() {
     : 0;
   const deposit      = Number(depositAmount) || minDeposit;
   const remaining    = Math.max(0, totalPrice - deposit);
-  const monthlyAmt   = selectedPlan ? Math.ceil(remaining / durationMos) : 0;
+  const monthlyAmt   = selectedPlan ? Math.ceil(remaining / Math.max(1, durationMos - 1)) : 0;
   const weeklyAmt    = selectedPlan
-    ? (durationWks ? Math.ceil(remaining / durationWks) : Math.ceil(remaining / (durationMos * 4)))
+    ? (durationWks ? Math.ceil(remaining / Math.max(1, durationWks - 1)) : Math.ceil(remaining / Math.max(1, durationMos * 4 - 1)))
     : 0;
 
   return (
@@ -314,7 +314,7 @@ export default function Estates() {
                   <button
                     onClick={() => setPayType('outright')}
                     className={`w-full text-left p-4 rounded-2xl border-2 transition-all
-                      ${payType === 'outright' ? 'border-navy bg-navy' : 'border-border bg-white'}`}
+                      ${payType === 'outright' ? 'border-navy bg-navy' : 'border-navy bg-white'}`}
                   >
                     <p className={`font-800 text-sm mb-0.5 ${payType === 'outright' ? 'text-white' : 'text-textmain'}`}>Pay in Full</p>
                     <p className={`text-xs ${payType === 'outright' ? 'text-white/70' : 'text-textsub'}`}>
@@ -324,7 +324,7 @@ export default function Estates() {
                   <button
                     onClick={() => setPayType('installment')}
                     className={`w-full text-left p-4 rounded-2xl border-2 transition-all
-                      ${payType === 'installment' ? 'border-navy bg-navy' : 'border-border bg-white'}`}
+                      ${payType === 'installment' ? 'border-navy bg-navy' : 'border-navy bg-white'}`}
                   >
                     <p className={`font-800 text-sm mb-0.5 ${payType === 'installment' ? 'text-white' : 'text-textmain'}`}>Pay in Installments</p>
                     <p className={`text-xs ${payType === 'installment' ? 'text-white/70' : 'text-textsub'}`}>
@@ -387,34 +387,32 @@ export default function Estates() {
                     .filter(plan => !!plan.is_active && (plan.payment_frequency || 'monthly') === payPeriod)
                     .map(plan => {
                     const isWeekly      = plan.payment_frequency === 'weekly';
-                    const estDep        = Number(selectedEstate?.initial_deposit_amount || 0);
-                    const planDeposit   = estDep || Math.ceil(totalPrice * ((plan.min_deposit_percent || 10) / 100));
-                    const planRemaining = Math.max(0, totalPrice - planDeposit);
-                    const displayAmt    = isWeekly && plan.duration_weeks
-                      ? Math.ceil(planRemaining / plan.duration_weeks)
-                      : Math.ceil(planRemaining / (plan.duration_months || 1));
+                    const totalPeriods  = isWeekly
+                      ? (plan.duration_weeks  || 52)
+                      : (plan.duration_months || 12);
+                    const paymentAmt    = Math.ceil(totalPrice / totalPeriods);
                     const periodLabel   = isWeekly ? '/wk' : '/mo';
-                    const durationLabel = isWeekly && plan.duration_weeks
+                    const durationLabel = isWeekly
                       ? `${plan.duration_weeks} weeks`
                       : `${plan.duration_months} months`;
                     const isSelected    = selectedPlan?.id === plan.id;
                     return (
                       <button
                         key={plan.id}
-                        onClick={() => { setSelectedPlan(plan); setDepositAmount(String(planDeposit)); }}
+                        onClick={() => { setSelectedPlan(plan); setDepositAmount(String(paymentAmt)); }}
                         className={`w-full text-left p-4 rounded-2xl border-2 transition-all
-                          ${isSelected ? 'border-navy bg-navy' : 'border-border bg-white'}`}
+                          ${isSelected ? 'border-navy bg-navy' : 'border-navy bg-white'}`}
                       >
                         <div className="flex items-start justify-between">
                           <div>
                             <p className={`font-800 text-sm ${isSelected ? 'text-white' : 'text-textmain'}`}>{plan.name}</p>
                             <p className={`text-xs mt-0.5 ${isSelected ? 'text-white/70' : 'text-textsub'}`}>
-                              {durationLabel} · deposit: {fmtMoney(planDeposit)}
+                              {totalPeriods} equal payments · {durationLabel}
                             </p>
                           </div>
                           <div className="text-right">
                             <p className={`font-800 text-sm ${isSelected ? 'text-white' : 'text-textmain'}`}>
-                              {fmtMoney(displayAmt)}{periodLabel}
+                              {fmtMoney(paymentAmt)}{periodLabel}
                             </p>
                             <span className="text-[10px] font-700 px-1.5 py-0.5 rounded-full bg-success-bg text-success">
                               Zero Interest
@@ -431,17 +429,19 @@ export default function Estates() {
 
                 {selectedPlan && (
                   <div className="mb-4">
-                    <p className="text-xs font-700 text-textsub uppercase tracking-wide mb-1.5">Initial Deposit</p>
+                    <p className="text-xs font-700 text-textsub uppercase tracking-wide mb-1.5">
+                      Pay More Upfront <span className="font-400 normal-case tracking-normal">(optional — default is equal payments)</span>
+                    </p>
                     <input
                       type="number"
                       value={depositAmount}
                       onChange={e => setDepositAmount(e.target.value)}
                       className="w-full h-12 px-4 rounded-xl border border-border bg-surface-2 text-textmain font-800 text-base mb-2"
-                      placeholder={`Minimum: ${fmtMoney(minDeposit)}`}
+                      placeholder={`Default 1st payment: ${fmtMoney(minDeposit)}`}
                     />
                     <div className="flex justify-between text-xs text-textsub">
-                      <span>Remaining after deposit</span>
-                      <span className="font-800 text-textmain">{fmtMoney(Math.max(0, totalPrice - (Number(depositAmount) || 0)))}</span>
+                      <span>Remaining after 1st payment</span>
+                      <span className="font-800 text-textmain">{fmtMoney(Math.max(0, totalPrice - (Number(depositAmount) || minDeposit)))}</span>
                     </div>
                   </div>
                 )}
@@ -476,7 +476,7 @@ export default function Estates() {
                   {payType === 'installment' && selectedPlan && (
                     <div className="mt-3 pt-3 border-t border-white/10 flex justify-around text-center">
                       <div>
-                        <p className="text-xs text-white/50 font-700">Initial Deposit</p>
+                        <p className="text-xs text-white/50 font-700">1st Payment</p>
                         <p className="text-base font-900 text-white">{fmtMoney(deposit)}</p>
                       </div>
                       <div className="w-px bg-white/10" />
