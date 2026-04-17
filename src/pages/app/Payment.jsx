@@ -15,6 +15,7 @@ export default function Payment() {
   const { showToast } = useToast();
 
   const [contract,     setContract]     = useState(null);
+  const [allContracts, setAllContracts] = useState([]);
   const [bankAccounts, setBankAccounts] = useState([]);
   const [schedule,     setSchedule]     = useState(null);
   const [loading,      setLoading]      = useState(true);
@@ -50,6 +51,16 @@ export default function Payment() {
         if (scR?.data) {
           const sd = scR.data.data || scR.data;
           setSchedule(Array.isArray(sd) ? sd : (sd.schedule || []));
+        }
+      } else {
+        // No contractId in URL — fetch all active contracts for the selector
+        const cListR = await contractsAPI.getAll().catch(() => ({ data: { data: [] } }));
+        const active = (cListR.data.data || []).filter(c => c.status === 'active');
+        setAllContracts(active);
+        // Auto-select if only one active contract
+        if (active.length === 1) {
+          navigate(`/payment?contractId=${active[0].id}`, { replace: true });
+          return;
         }
       }
       setLoading(false);
@@ -130,6 +141,40 @@ export default function Payment() {
 
       {loading ? (
         <div className="flex justify-center py-20"><Spinner size="lg" /></div>
+      ) : !contractId && allContracts.length === 0 ? (
+        <div className="px-4 py-12 text-center">
+          <p className="text-4xl mb-4">📄</p>
+          <p className="font-800 text-textmain text-base mb-2">No Active Contracts</p>
+          <p className="text-sm text-textsub mb-6">You don't have any active contracts to make a payment for.</p>
+          <button onClick={() => navigate('/estates')} className="bg-navy text-white font-800 px-6 py-3 rounded-2xl text-sm">Browse Estates</button>
+        </div>
+      ) : !contractId && allContracts.length > 1 ? (
+        <div className="px-4 py-4">
+          <p className="font-800 text-textmain text-base mb-1">Select a Contract</p>
+          <p className="text-sm text-textsub mb-4">Choose which contract you want to make a payment for.</p>
+          <div className="space-y-3">
+            {allContracts.map(c => {
+              const inst = c.payment_frequency === 'weekly' ? c.weekly_installment : c.monthly_installment;
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => navigate(`/payment?contractId=${c.id}`)}
+                  className="w-full bg-white border border-border rounded-2xl p-4 text-left hover:border-navy transition-colors"
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="font-800 text-textmain text-sm">{c.estate_name || 'Estate'}</p>
+                    <span className="bg-success-bg text-success text-[10px] font-700 px-2 py-0.5 rounded-full uppercase">{c.status}</span>
+                  </div>
+                  <p className="text-xs text-textsub">{c.contract_number} · Plot {c.plot_label || '—'}</p>
+                  <div className="flex items-center justify-between mt-3">
+                    <p className="text-xs text-textsub">Balance: <span className="font-700 text-textmain">{fmtMoney(c.outstanding_balance)}</span></p>
+                    <p className="text-xs text-red font-700">{fmtMoney(inst)}/{c.payment_frequency === 'weekly' ? 'wk' : 'mo'} →</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       ) : (
         <div className="px-4 py-4 overflow-y-auto">
 
@@ -370,3 +415,4 @@ export default function Payment() {
     </Layout>
   );
 }
+

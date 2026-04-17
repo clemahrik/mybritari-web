@@ -100,7 +100,7 @@ export default function Dashboard() {
   const promos = [
     { title: settings.promo_1_title || 'Pay Over 24 Months',    sub: settings.promo_1_subtitle || 'Zero interest — same total price always' },
     { title: settings.promo_2_title || 'Refer & Earn',           sub: settings.promo_2_subtitle || '20 full referrals = a FREE plot of land' },
-    { title: settings.promo_3_title || 'Property-Backed Loans',  sub: settings.promo_3_subtitle || 'Get up to 50% of your plot value as cash' },
+    { title: settings.promo_3_title || 'Property-Backed Loans',  sub: settings.promo_3_subtitle || 'Get up to 30% of your plot value as cash' },
   ];
 
   if (loading) return (
