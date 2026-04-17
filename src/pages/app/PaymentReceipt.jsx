@@ -138,7 +138,7 @@ export default function PaymentReceipt() {
                   ) : (
                     <label className="cursor-pointer">
                       <p className="text-xs text-textmuted">📷 Upload receipt photo (optional)</p>
-                      <input type="file" accept="image/*" className="hidden" onChange={async e => { const b = await fileToBase64(e.target.files[0]); set('receipt_image')(b); }} />
+                      <input type="file" accept="image/*" className="hidden" onChange={async e => { if (!e.target.files[0]) return; const b = await fileToBase64(e.target.files[0]); set('receipt_image')(b); }} />
                     </label>
                   )}
                 </div>

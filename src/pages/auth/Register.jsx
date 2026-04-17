@@ -51,7 +51,7 @@ export default function Register() {
     e.preventDefault();
     const { first_name, last_name, email, phone, password, confirm, referral_code, access_code } = form;
 
-    if (!first_name || !last_name || !email || !password)
+    if (!first_name || !last_name || !email || !phone || !password)
       return setError('Please fill in all required fields.');
     if (password.length < 8)
       return setError('Password must be at least 8 characters.');
