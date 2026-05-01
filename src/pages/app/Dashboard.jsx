@@ -13,9 +13,9 @@ const QUICK = [
   { icon: '🏘', label: 'Estates',   path: '/estates'         },
   { icon: '📄', label: 'Contracts', path: '/contracts'       },
   { icon: '📥', label: 'Receipt',   path: '/payment-receipt' },
-  { icon: '💰', label: 'Loan',      path: '/loan'            },
+  { icon: '💰', label: 'Loan',      path: null, comingSoon: true },
   { icon: '🗂', label: 'Docs',      path: '/documents'       },
-  { icon: '📍', label: 'Inspect',   path: '/inspection'      },
+  { icon: '📍', label: 'Inspect',   path: null, comingSoon: true },
   { icon: '🎁', label: 'Refer',     path: '/referral'        },
 ];
 
@@ -332,11 +332,14 @@ export default function Dashboard() {
               {QUICK.map(q => (
                 <button
                   key={q.label}
-                  onClick={() => navigate(q.path)}
-                  className="flex-shrink-0 flex flex-col items-center gap-1.5 bg-white border border-border rounded-2xl px-4 py-3 min-w-[70px]"
+                  onClick={() => q.comingSoon ? alert('Coming Soon! This feature is not available yet.') : navigate(q.path)}
+                  className={`flex-shrink-0 flex flex-col items-center gap-1 bg-white border border-border rounded-2xl px-4 py-3 min-w-[70px] relative ${q.comingSoon ? 'opacity-50' : ''}`}
                 >
                   <span className="text-xl">{q.icon}</span>
                   <span className="text-[10px] font-700 text-textsub whitespace-nowrap">{q.label}</span>
+                  {q.comingSoon && (
+                    <span className="text-[8px] font-800 text-red uppercase tracking-wide">SOON</span>
+                  )}
                 </button>
               ))}
             </div>
