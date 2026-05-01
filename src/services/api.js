@@ -35,6 +35,8 @@ export const authAPI = {
   submitKYC:            (data)  => api.post('/auth/kyc', data),
   verifyEmail:          (token) => api.get(`/auth/verify-email/${token}`),
   resendVerification:   ()      => api.post('/auth/resend-verification'),
+  forgotPassword:       (data)  => api.post('/auth/forgot-password', data),
+  resetPassword:        (data)  => api.post('/auth/reset-password', data),
 };
 
 export const estatesAPI = {

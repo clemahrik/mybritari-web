@@ -111,6 +111,10 @@ export default function Login() {
             )}
           </button>
 
+          <div className="flex justify-end mb-4">
+            <Link to="/forgot-password" className="text-red text-sm font-600">Forgot password?</Link>
+          </div>
+
           <div className="flex items-center gap-3 my-5">
             <div className="flex-1 h-px bg-border" />
             <span className="text-textmuted text-xs font-600">OR</span>

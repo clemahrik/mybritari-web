@@ -10,7 +10,7 @@ export default function PaymentCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const [status, setStatus] = useState('verifying'); // verifying | success | failed
+  const [status, setStatus] = useState('verifying'); // verifying | success | pending | failed
 
   useEffect(() => {
     const reference = searchParams.get('reference') || searchParams.get('trxref');
@@ -21,19 +21,23 @@ export default function PaymentCallback() {
 
     paymentsAPI.verifyPaystack(reference)
       .then(res => {
-        // Backend returns { success: true, data: { status: 'completed' } } on success
         if (res.data?.success === true) {
           setStatus('success');
           showToast('Payment successful!', 'success');
           setTimeout(() => navigate('/contracts'), 2500);
         } else {
           setStatus('failed');
-          showToast('Payment could not be verified', 'error');
         }
       })
-      .catch(() => {
-        setStatus('failed');
-        showToast('Verification failed. Contact support if you were charged.', 'error');
+      .catch(e => {
+        // Paystack pending = payment still processing (common with USSD/bank transfers)
+        // Backend intentionally returns 400 for pending so we don't wrongly mark success.
+        const serverStatus = e?.response?.data?.data?.status;
+        if (serverStatus === 'pending') {
+          setStatus('pending');
+        } else {
+          setStatus('failed');
+        }
       });
   }, []);
 
@@ -52,6 +56,21 @@ export default function PaymentCallback() {
             <div className="text-5xl mb-4">✅</div>
             <p className="text-lg font-900 text-textmain">Payment Confirmed!</p>
             <p className="text-sm text-textsub mt-2">Redirecting to your contracts…</p>
+          </>
+        )}
+        {status === 'pending' && (
+          <>
+            <div className="text-5xl mb-4">⏳</div>
+            <p className="text-lg font-900 text-textmain">Payment Processing</p>
+            <p className="text-sm text-textsub mt-2 mb-6">
+              Your payment is still being confirmed by your bank. Your contract balance will update automatically — check back in a few minutes.
+            </p>
+            <button
+              onClick={() => navigate('/contracts')}
+              className="bg-navy text-white font-800 px-6 py-3 rounded-2xl text-sm"
+            >
+              View Contracts
+            </button>
           </>
         )}
         {status === 'failed' && (

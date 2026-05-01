@@ -9,12 +9,10 @@ import { useAuth } from '../../context/AuthContext';
 import { fmtDate, copyToClipboard, initials } from '../../utils';
 
 const TIERS = [
-  { count: 1,  reward: '₦5,000 Cash',      icon: '🎁' },
-  { count: 3,  reward: '₦15,000 Cash',     icon: '💰' },
-  { count: 5,  reward: '10% Plot Discount', icon: '🏷️' },
-  { count: 10, reward: '₦50,000 Cash',     icon: '💎' },
-  { count: 15, reward: '20% Plot Discount', icon: '🌟' },
-  { count: 20, reward: 'FREE Plot of Land', icon: '🏆' },
+  { count: 5,  reward: '₦15,000 Cash Prize',       icon: '🎁' },
+  { count: 10, reward: '₦30,000 Cash Prize',       icon: '💰' },
+  { count: 15, reward: '₦100,000 Cash Prize',      icon: '💎' },
+  { count: 20, reward: 'FREE 200sqm Plot of Land', icon: '🏆' },
 ];
 
 export default function Referral() {

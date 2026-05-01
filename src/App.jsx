@@ -7,8 +7,11 @@ import { FullPageSpinner } from './components/Spinner';
 import Welcome  from './pages/auth/Welcome';
 import Login    from './pages/auth/Login';
 import Register from './pages/auth/Register';
-import Terms       from './pages/auth/Terms';
-import VerifyEmail from './pages/auth/VerifyEmail';
+import Terms               from './pages/auth/Terms';
+import TermsAndConditions  from './pages/TermsAndConditions';
+import VerifyEmail         from './pages/auth/VerifyEmail';
+import ForgotPassword      from './pages/auth/ForgotPassword';
+import ResetPassword       from './pages/auth/ResetPassword';
 
 // Onboarding
 import KYC from './pages/onboarding/KYC';
@@ -53,8 +56,11 @@ function AppRoutes() {
       <Route path="/"         element={<PublicRoute><Welcome /></PublicRoute>} />
       <Route path="/login"    element={<PublicRoute><Login /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
-      <Route path="/terms"        element={<Terms />} />
-      <Route path="/verify-email" element={<VerifyEmail />} />
+      <Route path="/terms"                element={<Terms />} />
+      <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+      <Route path="/verify-email"          element={<VerifyEmail />} />
+      <Route path="/forgot-password"      element={<ForgotPassword />} />
+      <Route path="/reset-password"       element={<ResetPassword />} />
       <Route path="/kyc"          element={<KYC />} />
 
       {/* Protected */}

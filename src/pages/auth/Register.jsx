@@ -113,9 +113,9 @@ export default function Register() {
           {/* Optional fields */}
           <div className="mb-4">
             <p className="text-xs text-textsub mb-3">
-              Were you referred? Enter their name below (optional)
+              Enter their referral code or full name (e.g. james-john or James John)
             </p>
-            <Field label="Referred By" value={form.referral_code} onChange={set('referral_code')} placeholder="e.g. James Doe" />
+            <Field label="Referred By" value={form.referral_code} onChange={set('referral_code')} placeholder="e.g. james-john" />
           </div>
 
           <div className="mb-5">
