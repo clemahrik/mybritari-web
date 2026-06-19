@@ -387,8 +387,11 @@ export default function Estates() {
                       <button
                         key={p}
                         onClick={() => { setPayPeriod(p); setSelectedPlan(null); setDepositAmount(''); }}
-                        className={`flex-1 py-2.5 rounded-xl text-sm font-700 border-2 transition-all
-                          ${payPeriod === p ? 'border-navy bg-navy text-white' : 'border-border text-textsub'}`}
+                        className={`flex-1 py-3 rounded-2xl text-sm font-800 border-2 transition-all
+                          ${payPeriod === p
+                            ? 'bg-navy border-navy text-white'
+                            : 'bg-white border-border text-textmain'
+                          }`}
                       >
                         {p === 'monthly' ? 'Monthly' : 'Weekly'}
                       </button>
@@ -415,7 +418,7 @@ export default function Estates() {
                         key={plan.id}
                         onClick={() => { setSelectedPlan(plan); setDepositAmount(String(paymentAmt)); }}
                         className={`w-full text-left p-4 rounded-2xl border-2 transition-all
-                          ${isSelected ? 'border-navy bg-navy' : 'border-navy bg-white'}`}
+                          ${isSelected ? 'border-navy bg-navy' : 'border-border bg-white'}`}
                       >
                         <div className="flex items-start justify-between">
                           <div>

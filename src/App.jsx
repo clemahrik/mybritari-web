@@ -1,3 +1,19 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// CLIENT WEB PORTAL RETIRED (2026-06-15)
+// The Android + iOS apps are now live, so the web portal has been taken down.
+// App.jsx renders ONLY the "Get the app" landing page for every URL.
+//
+// TO RESTORE THE WEB PORTAL: delete the active block below and uncomment the
+// original app (kept verbatim under "ORIGINAL APP — COMMENTED OUT").
+// ─────────────────────────────────────────────────────────────────────────────
+
+import GetTheApp from './pages/GetTheApp';
+
+export default function App() {
+  return <GetTheApp />;
+}
+
+/* ───────────────────────── ORIGINAL APP — COMMENTED OUT ─────────────────────
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './components/Toast';
@@ -52,7 +68,7 @@ function PublicRoute({ children }) {
 function AppRoutes() {
   return (
     <Routes>
-      {/* Public */}
+      {/* Public *}
       <Route path="/"         element={<PublicRoute><Welcome /></PublicRoute>} />
       <Route path="/login"    element={<PublicRoute><Login /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
@@ -63,7 +79,7 @@ function AppRoutes() {
       <Route path="/reset-password"       element={<ResetPassword />} />
       <Route path="/kyc"          element={<KYC />} />
 
-      {/* Protected */}
+      {/* Protected *}
       <Route path="/dashboard"       element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/estates"         element={<ProtectedRoute><Estates /></ProtectedRoute>} />
       <Route path="/contracts"       element={<ProtectedRoute><Contracts /></ProtectedRoute>} />
@@ -79,7 +95,7 @@ function AppRoutes() {
       <Route path="/roi"             element={<ProtectedRoute><ROICalculator /></ProtectedRoute>} />
       <Route path="/inspection"      element={<ProtectedRoute><Inspection /></ProtectedRoute>} />
 
-      {/* Fallback */}
+      {/* Fallback *}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
@@ -96,3 +112,4 @@ export default function App() {
     </AuthProvider>
   );
 }
+──────────────────────────────────────────────────────────────────────────── */
