@@ -163,7 +163,7 @@ export default function TermsAndConditions() {
           <p className="text-sm font-700 text-amber-800 mb-1">Important Notice</p>
           <p className="text-xs text-amber-700 leading-5">
             These terms are subject to change. Existing subscribers will be notified of material changes.
-            For queries, contact us at <span className="font-700">support@britariproperties.com</span>.
+            For queries, contact us at <span className="font-700">britariproperties@gmail.com</span>.
           </p>
         </div>
 
