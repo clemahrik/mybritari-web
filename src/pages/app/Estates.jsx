@@ -324,7 +324,7 @@ export default function Estates() {
                       </p>
                     </div>
                     <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all
-                      ${payType === 'outright' ? 'border-white bg-white' : 'border-[#0B1F3A] bg-transparent'}`}>
+                      ${payType === 'outright' ? 'border-white bg-white' : 'border-[#0C203C] bg-transparent'}`}>
                       {payType === 'outright' && <div className="w-2.5 h-2.5 rounded-full bg-navy" />}
                     </div>
                   </button>
@@ -341,7 +341,7 @@ export default function Estates() {
                       </p>
                     </div>
                     <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all
-                      ${payType === 'installment' ? 'border-white bg-white' : 'border-[#0B1F3A] bg-transparent'}`}>
+                      ${payType === 'installment' ? 'border-white bg-white' : 'border-[#0C203C] bg-transparent'}`}>
                       {payType === 'installment' && <div className="w-2.5 h-2.5 rounded-full bg-navy" />}
                     </div>
                   </button>

@@ -4,11 +4,11 @@ export default {
   theme: {
     extend: {
       colors: {
-        navy:         '#0B1F3A',
+        navy:         '#0C203C',
         'navy-mid':   '#122947',
         'navy-light': '#1A3A5C',
-        red:          '#C8102E',
-        'red-dark':   '#A50D24',
+        red:          '#F0601C',   // brand accent — orange since the 2026-09 rebrand, token name kept
+        'red-dark':   '#C94D12',
         'red-light':  '#FDECEA',
         surface:      '#F5F7FA',
         'surface-2':  '#EDF2F7',

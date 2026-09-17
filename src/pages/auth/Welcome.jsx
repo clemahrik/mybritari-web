@@ -101,7 +101,7 @@ export default function Welcome() {
                 className="h-0.5 rounded-full transition-all duration-300"
                 style={{
                   width:           i === idx ? 32 : 12,
-                  backgroundColor: i === idx ? '#C8102E' : 'rgba(255,255,255,0.25)',
+                  backgroundColor: i === idx ? '#F0601C' : 'rgba(255,255,255,0.25)',
                 }}
               />
             ))}
